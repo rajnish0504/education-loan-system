@@ -13,6 +13,11 @@ public class RajnishTestController {
     public String testing(){
             return "Testing Done";
     }
+    
+    @PostMapping("/new")
+    public String newTesing() {
+    	return "Success....";
+    }
 
 
 }
