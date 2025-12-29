@@ -18,7 +18,7 @@ public class Document {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id ;
-	private Long studentID;
+//	private Long studentID;
 	private String documentType;
 	private String fileName;
 	private String filePath;
