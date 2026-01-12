@@ -9,35 +9,44 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
 public class StudentSecurity {
-	
+
+	private final CorsConfigurationSource corsConfigurationSource;
+
+	public StudentSecurity(CorsConfigurationSource corsConfigurationSource) {
+		this.corsConfigurationSource = corsConfigurationSource;
+	}
+
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
-	
-	
 
-	    @Bean
-	    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-	        http
-	            .csrf(csrf -> csrf.disable())
-	            .authorizeHttpRequests(auth -> auth
-	                .requestMatchers("/student/signup").permitAll()
-	                .anyRequest().permitAll()
-	            );
+	@Bean
+	public AuthenticationManager authenticationManager(
+			AuthenticationConfiguration config) throws Exception {
+		return config.getAuthenticationManager();
+	}
 
-	        return http.build();
-	    }
-	
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
+		http
+				// ✅ CONNECT CORS HERE
+				.cors(cors -> cors.configurationSource(corsConfigurationSource))
 
-@Bean
-public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-	return config.getAuthenticationManager();
-}
+				// ✅ Disable CSRF for APIs
+				.csrf(csrf -> csrf.disable())
 
+				// ✅ Allow everything for now (development)
+				.authorizeHttpRequests(auth -> auth
+						.requestMatchers("/**").permitAll()
+				);
+
+		return http.build();
+	}
 }

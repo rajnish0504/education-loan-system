@@ -1,9 +1,10 @@
 package com.els.educationloansystem.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import com.els.educationloansystem.entity.LoanEligibility;
+import com.els.educationloansystem.entity.Loan;
 
-public interface LoanRepository extends JpaRepository<LoanEligibility, Long> {
-
+@Repository
+public interface LoanRepository extends JpaRepository<Loan, Long> {
 }
