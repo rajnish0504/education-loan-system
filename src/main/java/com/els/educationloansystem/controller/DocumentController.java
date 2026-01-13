@@ -18,7 +18,7 @@ import com.els.educationloansystem.service.DocumentService;
 import jakarta.servlet.http.HttpSession;
 
 @Controller
-@RequestMapping("/documents")
+@RequestMapping("api/student/documents")
 public class DocumentController {
     
 	@Autowired
