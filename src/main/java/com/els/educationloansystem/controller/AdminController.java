@@ -48,6 +48,15 @@ public class AdminController {
 
         throw new RuntimeException("Invalid admin credentials");
     }
+    
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/applications")
+    public ResponseEntity<?> getAllApplications() {
+        return ResponseEntity.ok(
+            this.loanApplicationService.getAllApplicationsForAdmin()
+        );
+    }
+
 
     
     @PreAuthorize("hasRole('ADMIN')")
@@ -57,6 +66,8 @@ public class AdminController {
         loanApplicationService.approveLoan(applicationId);
         return ResponseEntity.ok("Loan Approved Successfully");
     }
+    
+    
     
     
 
