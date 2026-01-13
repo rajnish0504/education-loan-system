@@ -1,65 +1,57 @@
 package com.els.educationloansystem.service.impl;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.els.educationloansystem.dto.DocumentDto;
 import com.els.educationloansystem.entity.Document;
+import com.els.educationloansystem.entity.LoanApplication;
 import com.els.educationloansystem.repository.DocumentRepository;
+import com.els.educationloansystem.repository.LoanApplicationRepository;
 import com.els.educationloansystem.service.DocumentService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class DocumentServiceImpl implements DocumentService {
 
-	@Autowired private DocumentRepository documentRepository;
-	
-	private final String UPLOAD_DIR = "uploads/";
+	@Autowired
+	private DocumentRepository documentRepo;
+
+	@Autowired
+	private LoanApplicationRepository applicationRepo;
 
 	@Override
-	public void uploadDocument(DocumentDto dto, MultipartFile file) {
-		
-		String fileName = file.getOriginalFilename();
-	    String path = "uploads/" + fileName;
+	public Document uploadDocument(DocumentDto dto) {
 
-	    try {
-	        Files.copy(file.getInputStream(), Paths.get(path));
-	    } catch (IOException e) {
-	        throw new RuntimeException("File upload failed");
-	    }
+		LoanApplication application = applicationRepo.findById(dto.getApplicationId())
+				.orElseThrow(() -> new RuntimeException("Application not found"));
 
-	    Document document = new Document();
-	    document.setStudentId(dto.getStudentId());
-	    document.setDocumentType(dto.getDocumentType());
-	    document.setFileName(fileName);
-	    document.setFilePath(path);
-	    document.setStatus("PENDING");
-	    document.setUploadedAt(LocalDateTime.now());
+		// ⚠ for now store only filename (later S3 / Cloudinary)
+		String fileUrl = dto.getFile().getOriginalFilename();
 
-	    documentRepository.save(document);
-		
+		Document document = new Document();
+		document.setDocumentType(dto.getDocumentType());
+		document.setDocumentUrl(fileUrl);
+		document.setUploadedDate(LocalDate.now());
+		document.setVerificationStatus("PENDING");
+		document.setLoanApplication(application);
+
+		return documentRepo.save(document);
 	}
 
 	@Override
-	public List<Document> getDocumentsByStudent(Long studentId) {
-		
-		return this.documentRepository.findByStudentId(studentId);
+	public List<Document> getDocumentsByApplication(Long applicationId) {
+		return documentRepo.findByLoanApplication_ApplicationId(applicationId);
 	}
 
 	@Override
-	public void updateDocumentStatus(Long docId, String status, String remarks) {
-		 Document doc = this.documentRepository.findById(docId);
-	        doc.setStatus(status);
-	        doc.setRemarks(remarks);
-	        documentRepository.save(doc);
-		
+	public void verifyDocument(Long documentId, String status) {
+
+		Document document = documentRepo.findById(documentId)
+				.orElseThrow(() -> new RuntimeException("Document not found"));
+
+		document.setVerificationStatus(status);
+		documentRepo.save(document);
 	}
-	
-	
 }

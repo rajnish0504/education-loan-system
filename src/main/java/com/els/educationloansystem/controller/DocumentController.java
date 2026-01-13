@@ -1,53 +1,53 @@
 package com.els.educationloansystem.controller;
 
+import com.els.educationloansystem.dto.DocumentDto;
+import com.els.educationloansystem.entity.Document;
+import com.els.educationloansystem.service.DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.els.educationloansystem.dto.DocumentDto;
-import com.els.educationloansystem.dto.StudentDto;
-import com.els.educationloansystem.entity.Document;
-import com.els.educationloansystem.entity.Student;
-import com.els.educationloansystem.service.DocumentService;
+import java.util.List;
 
-import jakarta.servlet.http.HttpSession;
-
-@Controller
-@RequestMapping("/documents")
+@RestController
+@RequestMapping("/api/documents")
+@CrossOrigin
 public class DocumentController {
-    
+
 	@Autowired
 	private DocumentService documentService;
-	
-	@GetMapping("/doc")
-	public String toUploadDocumetnt() {
-		return "UploadDocuments";
-	}
 
+	// Student uploads document
 	@PostMapping("/upload")
-	public String uploadDocument(@RequestParam("file") MultipartFile file,
-			@RequestParam("documentType") String documentType, HttpSession session) {
-
-		Student student = (Student) session.getAttribute("loggedInStudent");
-
+	public ResponseEntity<Document> uploadDocument(
+			@RequestParam Long applicationId,
+			@RequestParam String documentType,
+			@RequestParam MultipartFile file
+	) {
 		DocumentDto dto = new DocumentDto();
-		dto.setStudentId(student.getId());
+		dto.setApplicationId(applicationId);
 		dto.setDocumentType(documentType);
+		dto.setFile(file);
 
-		documentService.uploadDocument(dto, file);
-
-		return "redirect:/documents/status";
+		return ResponseEntity.ok(documentService.uploadDocument(dto));
 	}
 
-	@GetMapping("/status")
-	public String documentStatus(HttpSession session, Model model) {
-		Student student = (Student) session.getAttribute("loggedInStudent");
-		model.addAttribute("documents", documentService.getDocumentsByStudent(student.getId()));
-		return "DocumentStatus";
+	// Get all documents of application
+	@GetMapping("/application/{applicationId}")
+	public ResponseEntity<List<Document>> getDocuments(@PathVariable Long applicationId) {
+		return ResponseEntity.ok(
+				documentService.getDocumentsByApplication(applicationId)
+		);
+	}
+
+	// Admin verifies document
+	@PostMapping("/verify/{documentId}")
+	public ResponseEntity<String> verifyDocument(
+			@PathVariable Long documentId,
+			@RequestParam String status
+	) {
+		documentService.verifyDocument(documentId, status);
+		return ResponseEntity.ok("Document status updated");
 	}
 }

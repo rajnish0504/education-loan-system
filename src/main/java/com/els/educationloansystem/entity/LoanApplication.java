@@ -4,10 +4,14 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Data
 public class LoanApplication {
+
+    @OneToMany(mappedBy = "loanApplication", cascade = CascadeType.ALL)
+    private List<Document> documents;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

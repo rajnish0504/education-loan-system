@@ -1,20 +1,13 @@
 package com.els.educationloansystem.repository;
 
-import java.util.List;
-
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
 import com.els.educationloansystem.entity.Document;
 
+import java.util.List;
+
 @Repository
-public interface DocumentRepository extends JpaRepository<Document, Integer> {
-	
-	 List<Document> findByStudentId(Long studentId);
+public interface DocumentRepository extends JpaRepository<Document, Long> {
 
-	 Document findById(Long docId);
-
-	 
-
+	List<Document> findByLoanApplication_ApplicationId(Long applicationId);
 }

@@ -1,30 +1,26 @@
 package com.els.educationloansystem.entity;
 
-import java.time.LocalDateTime;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
+import java.time.LocalDate;
+
 @Entity
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 public class Document {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id ;
-	private Long studentId;
-	private String documentType;
-	private String fileName;
-	private String filePath;
-	private String status;
-	private String remarks;
-	private LocalDateTime uploadedAt;
-	
+	private Long documentId;
 
+	private String documentType;          // Aadhaar, PAN, Admission Letter
+	private String documentUrl;           // file path or cloud url
+	private LocalDate uploadedDate;
+
+	private String verificationStatus;    // PENDING / VERIFIED / REJECTED
+
+	@ManyToOne
+	@JoinColumn(name = "application_id")
+	private LoanApplication loanApplication;
 }
+
