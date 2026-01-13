@@ -1,12 +1,12 @@
 package com.els.educationloansystem.jwt;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -22,8 +22,19 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @Autowired
-    private UserDetailsService userDetailsService;
+    /**
+     * 🔥 VERY IMPORTANT
+     * Public endpoints ke liye JWT filter skip karo
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+
+        return path.equals("/api/auth/register")
+                || path.equals("/api/auth/login")
+                || path.equals("/api/admin/login")
+                || "OPTIONS".equalsIgnoreCase(request.getMethod());
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -36,33 +47,38 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
 
             String token = header.substring(7);
-            String username = jwtUtil.extractUsername(token);
 
-            if (username != null &&
-                SecurityContextHolder.getContext().getAuthentication() == null) {
+            // token expired → just continue (unauthenticated)
+            if (jwtUtil.isTokenExpired(token)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
 
-                UserDetails userDetails =
-                        userDetailsService.loadUserByUsername(username);
+            String email = jwtUtil.extractUsername(token);
+            String role = jwtUtil.extractRole(token);
 
-                if (jwtUtil.validateToken(token, userDetails)) {
+            if (email != null && role != null &&
+                    SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities());
+                List<SimpleGrantedAuthority> authorities =
+                        List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
-                    authentication.setDetails(
-                            new WebAuthenticationDetailsSource()
-                                    .buildDetails(request));
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                email,
+                                null,
+                                authorities
+                        );
 
-                    SecurityContextHolder.getContext()
-                            .setAuthentication(authentication);
-                }
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource()
+                                .buildDetails(request));
+
+                SecurityContextHolder.getContext()
+                        .setAuthentication(authentication);
             }
         }
 
         filterChain.doFilter(request, response);
     }
 }
-
