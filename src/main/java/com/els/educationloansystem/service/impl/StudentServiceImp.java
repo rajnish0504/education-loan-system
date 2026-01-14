@@ -37,7 +37,7 @@ public class StudentServiceImp implements StudentService{
 	       );
 
 	       Student student = studentMapper.dtoToEntity(studentDto);
-	       student.setRole("ROLE_STUDENT");
+	       student.setRole("STUDENT");
 	       studentRepository.save(student);
 	   }
 
