@@ -1,15 +1,13 @@
 package com.els.educationloansystem.controller;
 
+import com.els.educationloansystem.entity.Student;
+import com.els.educationloansystem.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.els.educationloansystem.dto.StudentDto;
 import com.els.educationloansystem.jwt.JWTRequest;
@@ -27,6 +25,9 @@ public class StudentController {
 
 	@Autowired
 	private JwtUtil jwtUtil;
+
+	@Autowired
+	private StudentRepository studentRepository;
 	
 	@Autowired StudentService service;
 	
@@ -69,6 +70,13 @@ public class StudentController {
 
 	    throw new RuntimeException("Invalid email or password");
 	}
+
+	@GetMapping("/me")
+	public Student getCurrentStudent(Authentication authentication) {
+		String email = authentication.getName();
+		return studentRepository.findByEmail(email).orElseThrow();
+	}
+
 
 
 
