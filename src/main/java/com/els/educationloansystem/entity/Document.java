@@ -5,6 +5,8 @@ import lombok.Data;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 @Entity
 @Data
 public class Document {
@@ -21,6 +23,7 @@ public class Document {
 
 	@ManyToOne
 	@JoinColumn(name = "application_id")
+    @JsonBackReference   // ✅ STOPS LOOP
 	private LoanApplication loanApplication;
 }
 
