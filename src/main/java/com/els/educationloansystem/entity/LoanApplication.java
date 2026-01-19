@@ -3,6 +3,7 @@ package com.els.educationloansystem.entity;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.*;
@@ -30,6 +31,7 @@ public class LoanApplication {
     /* 🔥 VERY IMPORTANT FIX */
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "student_id", nullable = false)
+    @JsonIgnore   // ✅ VERY IMPORTANT
     private Student student;
 
     @OneToMany(
