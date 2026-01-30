@@ -2,13 +2,14 @@ package com.els.educationloansystem.service.impl;
 
 import java.time.LocalDate;
 
-import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.els.educationloansystem.dto.LoanApplicationRequest;
+import com.els.educationloansystem.dto.LoanApplicationResponse;
 import com.els.educationloansystem.entity.Loan;
 import com.els.educationloansystem.entity.LoanApplication;
 import com.els.educationloansystem.entity.Student;
@@ -24,76 +25,111 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     private StudentRepository studentRepository;
 
     @Autowired
-    private LoanApplicationRepository applicationRepo;
+    private LoanApplicationRepository loanApplicationRepository;
 
     @Autowired
     private LoanRepository loanRepo;
 
-    // ================= ADMIN ACTIONS =================
+    // ================= ADMIN =================
 
     @Override
     public void approveLoan(Long applicationId) {
 
-        LoanApplication application = applicationRepo.findById(applicationId)
+        LoanApplication application = loanApplicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
         application.setApplicationStatus("APPROVED");
 
-        Loan loan = new Loan();
-        loan.setApplication(application);
-        loan.setInterestRate(8.0);
-        loan.setTenure(5);
-        loan.setApprovedDate(LocalDate.now());
-        loan.setLoanStatus("ACTIVE");
+        if (!loanRepo.existsByApplication_ApplicationId(applicationId)) {
+            Loan loan = new Loan();
+            loan.setApplication(application);
+            loan.setInterestRate(8.0);
+            loan.setTenure(5);
+            loan.setApprovedDate(LocalDate.now());
+            loan.setLoanStatus("ACTIVE");
+            loanRepo.save(loan);
+        }
 
-        loanRepo.save(loan);
-        applicationRepo.save(application);
+        loanApplicationRepository.save(application);
     }
 
     @Override
     public void rejectLoan(Long applicationId, String reason) {
 
-        LoanApplication application = applicationRepo.findById(applicationId)
+        LoanApplication application = loanApplicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
         application.setApplicationStatus("REJECTED");
         application.setEligibilityStatus(reason);
 
-        applicationRepo.save(application);
+        loanApplicationRepository.save(application);
     }
 
-    // ================= STUDENT ACTION =================
+    // ================= STUDENT =================
 
     @Override
-    public LoanApplication applyLoan(LoanApplicationRequest request) {
+    public LoanApplicationResponse applyLoan(LoanApplicationRequest request) {
 
-        // 🔥 GET LOGGED-IN USER FROM JWT (NOT FROM FRONTEND)
-        Authentication authentication =
+        Authentication auth =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        String email = authentication.getName(); // email stored in JWT
+        String email = auth.getName();
 
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        LoanApplication application = new LoanApplication();
-        application.setStudent(student); // ✅ CORRECT STUDENT MAPPING
-        application.setLoanAmount(request.getLoanAmount());
-        application.setCourseName(request.getCourseName());
-        application.setInstituteName(request.getInstituteName());
-        application.setCourseDuration(request.getCourseDuration());
-        application.setApplicationDate(LocalDate.now());
+        if (loanApplicationRepository.existsByStudent_IdAndApplicationStatus(
+                student.getId(), "PENDING")) {
+            throw new RuntimeException("You already have a pending loan application");
+        }
 
-        application.setApplicationStatus("PENDING");
-        application.setEligibilityStatus("PENDING");
+        LoanApplication app = new LoanApplication();
+        app.setStudent(student);
+        app.setLoanAmount(request.getLoanAmount());
+        app.setCourseName(request.getCourseName());
+        app.setInstituteName(request.getInstituteName());
+        app.setCourseDuration(request.getCourseDuration());
+        app.setApplicationStatus("PENDING");
+        app.setEligibilityStatus("PENDING");
 
-        return applicationRepo.save(application);
+        // ✅ CORRECT REPOSITORY
+        LoanApplication saved = loanApplicationRepository.save(app);
+
+        return new LoanApplicationResponse(
+                saved.getApplicationId(),
+                saved.getLoanAmount(),
+                saved.getCourseName(),
+                saved.getInstituteName(),
+                saved.getCourseDuration(),
+                saved.getApplicationStatus(),
+                saved.getEligibilityStatus(),
+                saved.getApplicationDate()
+        );
     }
 
-    // ================= ADMIN VIEW =================
+    @Override
+    public Object getMyApplication(String email) {
+
+        Student student = studentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        return loanApplicationRepository.findByStudent_Id(student.getId());
+    }
 
     @Override
-    public @Nullable Object getAllApplicationsForAdmin() {
-        return applicationRepo.findAll();
+    public LoanApplication getMyLatestApplication(Authentication authentication) {
+
+        Student student = studentRepository
+                .findByEmail(authentication.getName())
+                .orElseThrow();
+
+        return loanApplicationRepository
+                .findTopByStudent_IdOrderByApplicationDateDesc(student.getId())
+                .orElse(null);
+    }
+
+    @Override
+    public Object getAllApplicationsForAdmin() {
+        return loanApplicationRepository.findAll();
     }
 }
