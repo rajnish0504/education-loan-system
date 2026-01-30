@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface LoanApplicationRepository
@@ -37,4 +38,14 @@ public interface LoanApplicationRepository
 	List<LoanApplication> findByStudent_Id(Long studentId);
 
 	List<LoanApplication> findByStudentId(Long id);
+	
+	Optional<LoanApplication> findByStudent_IdAndApplicationStatus(
+	        Long studentId,
+	        String applicationStatus
+	);
+
+	Optional<LoanApplication> findTopByStudent_IdOrderByApplicationDateDesc(Long id);
+	
+	boolean existsByStudent_IdAndApplicationStatus(Long studentId, String status);
+
 }
