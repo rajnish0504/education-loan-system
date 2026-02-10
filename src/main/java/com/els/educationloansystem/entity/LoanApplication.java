@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -28,10 +27,12 @@ public class LoanApplication {
 
     private LocalDate applicationDate = LocalDate.now();
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
+    @JsonIgnore   // 🔥 VERY IMPORTANT
     private Student student;
 
+    private String rejectionReason;
     @OneToMany(
         mappedBy = "loanApplication",
         cascade = CascadeType.ALL,
@@ -39,5 +40,6 @@ public class LoanApplication {
     )
     @JsonIgnore
     private List<Document> documents;
-}
 
+	
+}
