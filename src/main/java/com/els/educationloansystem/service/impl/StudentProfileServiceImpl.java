@@ -1,6 +1,8 @@
 package com.els.educationloansystem.service.impl;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -45,4 +47,19 @@ public class StudentProfileServiceImpl implements StudentProfileService {
 
         return profileRepository.save(profile);
     }
+
+    @Override
+    public StudentProfile getProfile(Authentication authentication) {
+
+        String email = authentication.getName();
+
+        Student student = studentRepository
+                .findByEmail(email)
+                .orElseThrow();
+
+        return profileRepository
+                .findByStudent_Id(student.getId())
+                .orElse(null);
+    }
+
 }
