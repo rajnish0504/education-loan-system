@@ -14,7 +14,7 @@ import com.els.educationloansystem.repository.LoanApplicationRepository;
 import com.els.educationloansystem.service.AdminApplicationService;
 
 @Service
-public class AdminApplicationServiceImpl implements AdminApplicationService {
+public  class AdminApplicationServiceImpl implements AdminApplicationService {
 
     @Autowired
     private LoanApplicationRepository loanRepo;
