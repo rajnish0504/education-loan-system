@@ -41,11 +41,14 @@ public class AdminDocumentController {
         }
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=\"" + filePath.getFileName() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(resource);
     }
+
+
+
+
 
     @PostMapping("/{documentId}/verify")
     public ResponseEntity<String> verifyDocument(@PathVariable Long documentId) {
