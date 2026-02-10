@@ -24,32 +24,22 @@ public class StudentProfileController {
     @Autowired
     private StudentProfileService profileService;
 
-    @Autowired
-    private StudentProfileRepository profileRepository;
-
-    @Autowired
-    private StudentRepository studentRepository;
-
-    // GET PROFILE (AUTO-FILL FORM)
+    // 🔹 GET PROFILE (for auto-fill)
     @GetMapping
-    public ResponseEntity<?> getProfile(Authentication auth) {
-
-        Student student = studentRepository
-                .findByEmail(auth.getName())
-                .orElseThrow();
-
+    public ResponseEntity<?> getProfile(Authentication authentication) {
         return ResponseEntity.ok(
-            profileRepository.findByStudent_Id(student.getId()).orElse(null)
+                profileService.getProfile(authentication)
         );
     }
 
-    // SAVE / UPDATE PROFILE
+    // 🔹 SAVE / UPDATE PROFILE
     @PostMapping
     public ResponseEntity<?> saveProfile(
-            @RequestBody StudentProfileDto dto) {
-
+            @RequestBody StudentProfileDto dto,
+            Authentication authentication
+    ) {
         return ResponseEntity.ok(
-            profileService.saveOrUpdate(dto)
+                profileService.saveOrUpdate(dto)
         );
     }
 }
