@@ -29,13 +29,13 @@ public class StudentDashboardController {
 
         Long studentId = student.getId();
 
-        long total = loanApplicationRepository.countByStudentId(studentId);
+        long total = loanApplicationRepository.countByStudent_Id(studentId);
         long approved = loanApplicationRepository
-                .countByStudentIdAndApplicationStatus(studentId, "APPROVED");
+                .countByStudent_IdAndApplicationStatus(studentId, "APPROVED");
         long pending = loanApplicationRepository
-                .countByStudentIdAndApplicationStatus(studentId, "PENDING");
+                .countByStudent_IdAndApplicationStatus(studentId, "PENDING");
         long rejected = loanApplicationRepository
-                .countByStudentIdAndApplicationStatus(studentId, "REJECTED");
+                .countByStudent_IdAndApplicationStatus(studentId, "REJECTED");
 
         return new StudentLoanStatusSummaryDto(
                 total,
