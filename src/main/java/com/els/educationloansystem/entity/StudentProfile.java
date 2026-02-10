@@ -1,5 +1,6 @@
 package com.els.educationloansystem.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -20,5 +21,6 @@ public class StudentProfile {
 
     @OneToOne
     @JoinColumn(name = "student_id", unique = true)
+    @JsonIgnore   // 🔥 VERY IMPORTANT
     private Student student;
 }
