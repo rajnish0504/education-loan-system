@@ -37,9 +37,9 @@ public class StudentNotificationController {
                 .findByEmail(email)
                 .orElseThrow();
 
-        // ✅ FETCH LOANS EXPLICITLY
+        // ✅ FIXED METHOD NAME
         List<LoanApplication> loans =
-                loanApplicationRepository.findByStudentId(student.getId());
+                loanApplicationRepository.findByStudent_Id(student.getId());
 
         return notificationService.generateNotifications(loans);
     }
