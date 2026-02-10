@@ -1,12 +1,14 @@
 package com.els.educationloansystem.service.impl;
 
 import java.time.LocalDate;
-
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.els.educationloansystem.dto.LoanApplicationRequest;
 import com.els.educationloansystem.dto.LoanApplicationResponse;
@@ -28,9 +30,9 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     private LoanApplicationRepository loanApplicationRepository;
 
     @Autowired
-    private LoanRepository loanRepo;
+    private LoanRepository loanRepository;
 
-    // ================= ADMIN =================
+    /* ================= ADMIN ================= */
 
     @Override
     public void approveLoan(Long applicationId) {
@@ -39,15 +41,16 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
         application.setApplicationStatus("APPROVED");
+        application.setEligibilityStatus("ELIGIBLE");
 
-        if (!loanRepo.existsByApplication_ApplicationId(applicationId)) {
+        if (!loanRepository.existsByApplication_ApplicationId(applicationId)) {
             Loan loan = new Loan();
             loan.setApplication(application);
             loan.setInterestRate(8.0);
             loan.setTenure(5);
             loan.setApprovedDate(LocalDate.now());
             loan.setLoanStatus("ACTIVE");
-            loanRepo.save(loan);
+            loanRepository.save(loan);
         }
 
         loanApplicationRepository.save(application);
@@ -60,40 +63,43 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
         application.setApplicationStatus("REJECTED");
-        application.setEligibilityStatus(reason);
+        application.setEligibilityStatus("NOT_ELIGIBLE");
+        application.setRejectionReason(reason); // ✅ NOW VALID
 
         loanApplicationRepository.save(application);
     }
 
-    // ================= STUDENT =================
+    /* ================= STUDENT ================= */
 
     @Override
     public LoanApplicationResponse applyLoan(LoanApplicationRequest request) {
 
-        Authentication auth =
-                SecurityContextHolder.getContext().getAuthentication();
-
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
 
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        if (loanApplicationRepository.existsByStudent_IdAndApplicationStatus(
-                student.getId(), "PENDING")) {
-            throw new RuntimeException("You already have a pending loan application");
+        // 🚫 BLOCK IF PENDING EXISTS
+        if (loanApplicationRepository
+                .existsByStudent_IdAndApplicationStatus(student.getId(), "PENDING")) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "You already have a pending loan application"
+            );
         }
 
-        LoanApplication app = new LoanApplication();
-        app.setStudent(student);
-        app.setLoanAmount(request.getLoanAmount());
-        app.setCourseName(request.getCourseName());
-        app.setInstituteName(request.getInstituteName());
-        app.setCourseDuration(request.getCourseDuration());
-        app.setApplicationStatus("PENDING");
-        app.setEligibilityStatus("PENDING");
+        LoanApplication application = new LoanApplication();
+        application.setStudent(student);
+        application.setLoanAmount(request.getLoanAmount());
+        application.setCourseName(request.getCourseName());
+        application.setInstituteName(request.getInstituteName());
+        application.setCourseDuration(request.getCourseDuration());
+        application.setApplicationStatus("PENDING");
+        application.setEligibilityStatus("PENDING");
 
-        // ✅ CORRECT REPOSITORY
-        LoanApplication saved = loanApplicationRepository.save(app);
+        LoanApplication saved = loanApplicationRepository.save(application);
 
         return new LoanApplicationResponse(
                 saved.getApplicationId(),
@@ -108,7 +114,7 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     }
 
     @Override
-    public Object getMyApplication(String email) {
+    public List<LoanApplication> getMyApplication(String email) {
 
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -129,7 +135,7 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     }
 
     @Override
-    public Object getAllApplicationsForAdmin() {
+    public List<LoanApplication> getAllApplicationsForAdmin() {
         return loanApplicationRepository.findAll();
     }
 }
